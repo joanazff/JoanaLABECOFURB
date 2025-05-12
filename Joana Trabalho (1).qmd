@@ -1,0 +1,158 @@
+---
+title: "Joana Ziehlsdorff"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(WDI)
+
+options(scipen = 999) # REMOVER A NOT. CIENT.
+# DADOS EM PAINEL
+eletdadospainel <- WDI(country = 'all',
+              indicator = 'EG.ELC.ACCS.ZS')
+
+paises <- c('BR', 'US')
+
+eletbrus <- WDI(country = paises,
+                  indicator = 'EG.ELC.ACCS.ZS')
+
+# CORTE TRANSVERSAL
+elettransversal <- WDI(country = 'all',
+                  indicator = 'EG.ELC.ACCS.ZS',
+                  start = 2021, end = 2021)
+
+# SÉRIE TEMPORAL
+elettemporalbr <- WDI(country = 'BR',
+                indicator = 'EG.ELC.ACCS.ZS')
+```
+
+## VARIÁVEL
+
+Neste projeto, foi escolhida a variável que se refere ao acesso da população à eletricidade. Apesar de ser um assunto pouco comentado atualmente, é perceptível, pela análise dos gráficos, que existem ainda nos dias atuais países que não possuem acesso a algo que deveria ser indispensável para toda a população ao redor do mundo.
+
+O indicador utilizado cita os seus dados em porcentagem (%) e os tabela em um período anual. O Banco de Dados Global de Eletrificação (GED) do Banco Mundial compila dados de pesquisas domiciliares representativas em nível nacional e, ocasionalmente, dados censitários, de fontes que remontam desde 1990, portanto o próprio indicador foi localizado por mim através do banco de dados mundial, "World Development Indicators", que centraliza em seu site os mais diversos indicadores sobre diferentes assuntos.
+
+## GRÁFICO DE DADOS EM PAINEL
+
+É notório, à partir da análise do gráfico, que a partir dos anos 2000 a maior parte dos países possuí uma estatística que em geral se aproxima muito dos 100% (dados destacados em azul representando os países), entretanto, ainda é visível que existem países que infelizmente estão abaixo dos 50%, o que é intrigante, já que fica difícil de se imaginar de que forma metade da população de um país inteiro consegue sobreviver sem acesso a energia elétrica durante os dias atuais.
+
+Fica evidente que a maior parte dos países teve um crescimento estável e robusto à partir da década de 90, mas algo que pode-se notar no início do período relatado, é a disparidade entre os países em si. Já que em uma mesma década existiam Estados com quase ou mais de 80% da população com acesso e outros com nem 30%.
+
+Agora relatando o que foi apresentado sobre o Brasil (dados detacados em vermelho), o gráfico com os dados em painel não traz uma boa visualização sobre as suas etatísticas, porém o argumento de que o crescimento foi robusto e estável para a maior parte do mundo se adequa ao Brasil também, já que o mesmo teve um rendimento considerável nesse setor.
+
+```{r}
+#| label: graficodadosempainel
+#| warning: false
+#| echo: false
+
+# Primeiro, filtramos os dados a partir de 1990
+eletdadospainel_filtrado <- eletdadospainel %>%
+  filter(year >= 1990)
+
+# Criamos o gráfico
+ggplot(eletdadospainel_filtrado, 
+       aes(x = year, y = EG.ELC.ACCS.ZS, group = country)) +
+  
+  # Dados dos outros países em azul e pontilhados
+  geom_line(data = filter(eletdadospainel_filtrado, country != "Brazil"),
+            color = "blue", linetype = "dotted", alpha = 0.5) +
+
+  # Dados do Brasil em vermelho e linha contínua
+  geom_line(data = filter(eletdadospainel_filtrado, country == "Brazil"),
+            color = "red", size = 1.2) +
+  
+  # Títulos e rótulos
+  labs(
+    title = "Acesso à eletricidade (% da população)",
+    x = "Ano",
+    y = "Acesso à eletricidade (% da população)"
+  ) +
+  
+  # Tema moderno e minimalista
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12)
+  )
+```
+
+## GRÁFICO DE DADOS DE CORTE TRANSVERSAL
+
+A análise dos dados de corte transversal não trás uma analíse muito diferente das dos dados em painel, entretanto, neste modelo é destacado apenas um ano, que em questão é 2021. Com isso, pode-se notar de uma maneira mais clara que ainda existe uma disparidade em relação ao acesso a eletricidade com alguns países, que infelizmente ainda possuem menos de 50% da população com acesso a energia elétrica.
+
+Isso pode nos retratar que mesmo com o crescimento mundial nesse setor sendo consistente e estável, existem setores que devem ser mais explorados para melhorar essas estatísticas e trazer uma maior igualdade em relação a esse tópico. Além disso, observando o Brasil fica evidente que nós tivemos um sucesso nesse setor, ja que em 2021 a maior parte da nossa população felizmente possuí o acesso adequado. Portanto, fazendo uma relação com os dados apresentados no gráfico anterior, é possível concluir que as políticas adotadas na área em meados dos anos 90 e 2000 foram muito eficazes.
+
+```{r}
+#| label: graficocortetransversal 
+#| warning: false 
+#| echo: false  
+
+# Filtrar apenas o ano de 2021
+elettransversal_2021 <- elettransversal %>%
+  filter(year == 2021)
+
+# Criar o gráfico
+ggplot(elettransversal_2021, aes(x = year, y = EG.ELC.ACCS.ZS, group = country)) +
+  
+  # Pontos de todos os países
+  geom_point(color = "blue", alpha = 0.5) +
+  
+  # Destacar o Brasil em vermelho com linha (apesar de ser 1 ponto, para efeito visual)
+  geom_point(data = filter(elettransversal_2021, country == "Brazil"),
+             color = "red", size = 2) +
+  geom_line(data = filter(elettransversal_2021, country == "Brazil"),
+            aes(group = country), color = "red", size = 0.5) +
+
+  # Títulos e rótulos
+  labs(
+    title = "Acesso à eletricidade em 2021 (% da população)",
+    x = "Ano",
+    y = "Acesso à eletricidade (% da população)"
+  ) +
+
+  # Limitar eixo x ao ano de 2021
+  scale_x_continuous(breaks = 2021) +
+
+  # Tema moderno e minimalista
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12)
+  )
+```
+
+## GRÁFICO DE DADOS DE SÉRIE TEMPORAL
+
+Neste modelo fica muito mais fácil a identificação dos dados do Brasil, já que os mesmos foram isolados, consequentemente causando uma melhor visuaização. Com isso, podemos perceber o que ja foi citado na análise dos últimos dois moldes, de que o país teve um crescimento consistente e estável nesse setor. E além desse detalhe, fica claro que nunca se teve um retorno na taxa de acesso ao recurso, o que mostra que a população, mesmo crescendo, continuou mantendo o seu acesso, apesar dos diversos problemas econômicos e políticos no períódo, como a pandemia no próprio ano de 2019.
+
+Portanto, como dito anteriormente, é evidente que foram colhidos bons frutos nessa área sobre decisões que foram tomadas ainda no século passado, garantindo assim o conforto e sobretudo o direito básico de ter acesso a energia elétrica para a maior parte das famílias do país. Entretando, vale ressaltar que mesmo assim o assunto sempre deve ser revisado, já que ainda, sem sombra de dúvidas, existem pessoas vivendo em uma situação degradante.
+
+```{r}
+#| label: graficoserietemporal 
+#| warning: false  
+#| echo: false    
+
+# Filtrar os dados a partir de 1990
+elettemporalbr_filtrado <- elettemporalbr %>%
+  filter(year >= 1990)
+
+# Criar o gráfico com estilo moderno e minimalista
+ggplot(elettemporalbr_filtrado, 
+       aes(x = year, y = EG.ELC.ACCS.ZS)) +
+  geom_line(color = "red", size = 1.2) +
+  labs(
+    title = "Acesso à eletricidade no Brasil (% da população)",
+    x = "Ano",
+    y = "Acesso à eletricidade (% da população)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.title = element_text(size = 12)
+  )
+```
