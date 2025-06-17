@@ -1,0 +1,103 @@
+---
+title: "Joana Ziehlsdorff"
+format: html
+editor: visual
+---
+
+## Entendendo o Gráfico do IGP-M
+
+O IGP-M, ou Índice Geral de Preços - Mercado, é um indicador muito importante no Brasil que mostra como os preços de vários produtos e serviços mudam ao longo do tempo. Ele é usado, por exemplo, para reajustar o valor do aluguel, tarifas e contratos, acompanhando a inflação.
+
+No gráfico, podemos ver a evolução do IGP-M durante vários anos. A área azul clara mostra o quanto o índice foi aumentando ou diminuindo, e a linha azul escura acompanha essa mudança com mais detalhe.
+
+Um ponto vermelho no gráfico indica o valor mais alto que o índice atingiu no período — é o “pico” da inflação. Esse momento geralmente acontece quando os preços sobem bastante, devido a situações como aumento dos custos, crises econômicas ou mudanças na economia.
+
+Também temos um ponto verde, que mostra o valor mais baixo do índice, indicando períodos em que os preços subiram pouco ou até caíram.
+
+Analisando esse gráfico, conseguimos entender melhor quando a inflação foi maior ou menor no país, o que ajuda as pessoas e empresas a se prepararem para esses momentos. Além disso, essa informação é importante para quem faz contratos que dependem do reajuste do IGP-M, garantindo que os valores estejam sempre atualizados com a realidade econômica.
+
+```{r setup, include=FALSE}
+# Carregar os pacotes
+library(GetBCBData)
+library(tidyverse)
+```
+
+```{r}
+#| include: false
+# Definir o ID da série 7495 (IPCA mensal)
+my.id <- c(serie_188 = 188)
+
+# Obter os dados da série
+df.bcb <- gbcbd_get_series(
+  id = my.id,
+  first.date = '2000-01-01',
+  last.date = Sys.Date(),
+  format.data = 'long',
+  use.memoise = TRUE,
+  cache.path = tempdir(),
+  do.parallel = FALSE
+)
+```
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+# Elibrary(ggplot2)
+library(dplyr)
+library(scales)
+
+# Encontrar o ponto máximo e mínimo
+pico <- df.bcb %>% filter(value == max(value))
+valemin <- df.bcb %>% filter(value == min(value))
+
+ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_area(aes(fill = value), alpha = 0.6) +  # área com preenchimento gradual
+  scale_fill_gradient(low = "#a6cee3", high = "#1f77b4", guide = "none") +
+  geom_line(color = "#08306b", size = 1.5, lineend = "round", alpha = 0.85) +
+  geom_point(data = pico, aes(x = ref.date, y = value), color = "#de2d26", size = 4) +
+  geom_point(data = valemin, aes(x = ref.date, y = value), color = "#238b45", size = 4) +
+  geom_label(
+    data = pico,
+    aes(label = paste0("Pico: ", round(value, 2))),
+    fill = alpha("white", 0.75),
+    color = "#de2d26",
+    fontface = "bold",
+    size = 4,
+    vjust = -1.2,
+    label.size = NA
+  ) +
+  geom_label(
+    data = valemin,
+    aes(label = paste0("Mínimo: ", round(value, 2))),
+    fill = alpha("white", 0.75),
+    color = "#238b45",
+    fontface = "bold",
+    size = 4,
+    vjust = 1.2,
+    label.size = NA
+  ) +
+  scale_y_continuous(
+    labels = label_number(big.mark = ".", decimal.mark = ","),
+    breaks = pretty(df.bcb$value, n = 7)
+  ) +
+  labs(
+    title = "Série Histórica IGP-M - Banco Central (188)",
+    subtitle = paste0(format(min(df.bcb$ref.date), "%Y"), " até ", format(max(df.bcb$ref.date), "%Y")),
+    x = "Ano",
+    y = "Valor da Série (IGP-M)",
+    caption = "Fonte: Banco Central do Brasil"
+  ) +
+  theme_minimal(base_family = "Arial") +
+  theme(
+    plot.title = element_text(size = 20, face = "bold", color = "#08306b"),
+    plot.subtitle = element_text(size = 14, margin = margin(b = 15), color = "#555555"),
+    plot.caption = element_text(size = 10, color = "#666666"),
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    panel.grid.major.y = element_line(color = "gray80", linetype = "dotted"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
